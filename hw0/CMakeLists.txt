@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.9)
 project (hw0)
-set(CMAKE_CXX_FLAGS_DEBUG)
-add_definitions(-w)
+set(CMAKE_CXX_FLAGS_DEBUG  "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
+add_definitions(-w -g)
 
 
 #Directories
@@ -13,7 +13,7 @@ file(GLOB map   "map.c")
 file(GLOB wc    "wc.c")
 
 #executable
-add_executable(main.tsk  ${main}  )
-add_executable(map.tsk  ${map}  )
-add_executable(wc.tsk  ${wc}  )
+add_executable(main  ${main}  )
+add_executable(map  ${map}  )
+add_executable(wc  ${wc}  )
 
