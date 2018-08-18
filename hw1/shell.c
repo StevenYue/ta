@@ -27,8 +27,10 @@ struct termios shell_tmodes;
 /* Process group id for the shell */
 pid_t shell_pgid;
 
-int cmd_exit(struct tokens *tokens);
 int cmd_help(struct tokens *tokens);
+int cmd_exit(struct tokens *tokens);
+int cmd_pwd(struct tokens *tokens);
+int cmd_cd(struct tokens *tokens);
 
 /* Built-in command functions take token array (see parse.h) and return int */
 typedef int cmd_fun_t(struct tokens *tokens);
@@ -43,6 +45,8 @@ typedef struct fun_desc {
 fun_desc_t cmd_table[] = {
   {cmd_help, "?", "show this help menu"},
   {cmd_exit, "exit", "exit the command shell"},
+  {cmd_pwd, "pwd", "print current dir"},
+  {cmd_cd, "cd", "change current dir"},
 };
 
 /* Prints a helpful description for the given command */
@@ -55,6 +59,42 @@ int cmd_help(unused struct tokens *tokens) {
 /* Exits this shell */
 int cmd_exit(unused struct tokens *tokens) {
   exit(0);
+}
+
+int cmd_pwd(struct tokens *tokens)
+{
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) != NULL)
+    {
+        fprintf(stdout, "Current working dir: %s\n", cwd);
+    }
+    else
+    {
+        perror("getcwd() error");
+    }
+    return 0;
+}
+
+int cmd_cd(struct tokens *ts)
+{
+    if ( ts->tokens_length > 2 )
+    {
+        printf("too many arguments");
+    }
+    else if ( ts->tokens_length == 2 ) 
+    {
+        if ( chdir(ts->tokens[1]) ) 
+        {
+            printf("%s no such dir:", ts->tokens[1]);
+        }
+    }
+    else if ( ts->tokens_length == 1 )
+    {
+        const char* home = getenv("HOME"); 
+        chdir(home); 
+    }
+    else{}
+    return 0;
 }
 
 /* Looks up the built-in command, if it exists. */

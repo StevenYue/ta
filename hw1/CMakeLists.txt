@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.9)
 project (hw1)
 set(CMAKE_CXX_FLAGS_DEBUG)
-add_definitions(-w)
+add_definitions(-w -g)
     
 #Directories
 include_directories("${PROJECT_BINARY_DIR}")
