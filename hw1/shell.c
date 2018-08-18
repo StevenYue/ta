@@ -97,6 +97,23 @@ int cmd_cd(struct tokens *ts)
     return 0;
 }
 
+int exe_sys(struct tokens* tokens)
+{
+    if ( tokens->tokens_length == 1 )
+    {
+        return execv(tokens->toekns[0], NULL);
+    }
+    else if ( tokens->tokens_length > 1 )
+    {
+        char* const argv[];
+        return execv(tokens->toekns[0], NULL);
+    }
+    else
+    {
+        return 0;
+    }
+}
+
 /* Looks up the built-in command, if it exists. */
 int lookup(char cmd[]) {
   for (unsigned int i = 0; i < sizeof(cmd_table) / sizeof(fun_desc_t); i++)
@@ -152,7 +169,10 @@ int main(unused int argc, unused char *argv[]) {
       cmd_table[fundex].fun(tokens);
     } else {
       /* REPLACE this to run commands as programs. */
-      fprintf(stdout, "This shell doesn't know how to run programs.\n");
+        if ( exe_sys(tokens) )
+        {
+            fprintf(stdout, "This shell doesn't know how to run programs.\n");
+        }
     }
 
     if (shell_is_interactive)
