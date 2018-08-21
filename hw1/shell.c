@@ -9,7 +9,7 @@
 #include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
-
+#include <dirent.h>
 #include "tokenizer.h"
 
 /* Convenience macro to silence compiler warnings about unused function parameters. */
@@ -97,20 +97,64 @@ int cmd_cd(struct tokens *ts)
     return 0;
 }
 
-int exe_sys(struct tokens* tokens)
+int exe_sys(struct tokens* tokens, const struct tokens* pathes)
 {
-    if ( tokens->tokens_length == 1 )
+    if ( 0 == tokens->tokens_length )
     {
-        return execv(tokens->toekns[0], NULL);
-    }
-    else if ( tokens->tokens_length > 1 )
-    {
-        char* const argv[];
-        return execv(tokens->toekns[0], NULL);
+        return 0;
     }
     else
     {
+        char** argv = (char**)malloc(tokens->tokens_length * sizeof(char*));
+        for ( size_t i = 0; i < tokens->tokens_length; ++i )
+        {
+            argv[i] = tokens->tokens[i];
+        }
+        resolve_path(tokens, pathes);
+        pid_t pid = fork();
+        int exit = 0;
+        if ( 0 == pid )
+        {
+            execv(tokens->tokens[0], argv);
+        }
+        else
+        {
+            wait(&exit);
+            free(argv);
+        }
         return 0;
+    }
+}
+
+void resolve_path(struct tokens* tokens, const struct tokens* pathes)
+{
+    struct dirent*  de;
+    char*           path = NULL;
+    for ( size_t i = 0; i < pathes->tokens_length; ++i )
+    {   
+        DIR* dr = opendir(pathes->tokens[i]);
+        if ( NULL == dr )
+        {
+            continue;
+        }
+        while ( NULL != (de = readdir(dr)) )
+        {
+            if ( 0 == strcmp(tokens->tokens[0], de->d_name) )
+            {
+                path = pathes->tokens[i];
+                break;
+            }
+        }
+        if ( NULL != path )
+        {
+            char* fullPath = (char*)malloc(strlen(tokens->tokens[0]) + strlen(path) + 2);
+            strcpy(fullPath, path);
+            strcat(fullPath, "/");
+            strcat(fullPath, tokens->tokens[0]);
+            free(tokens->tokens[0]);
+            tokens->tokens[0] = fullPath;
+            break;
+        }
     }
 }
 
@@ -154,6 +198,8 @@ int main(unused int argc, unused char *argv[]) {
   static char line[4096];
   int line_num = 0;
 
+  const struct tokens *pathes = tokenize_path();
+
   /* Please only print shell prompts when standard input is not a tty */
   if (shell_is_interactive)
     fprintf(stdout, "%d: ", line_num);
@@ -168,8 +214,7 @@ int main(unused int argc, unused char *argv[]) {
     if (fundex >= 0) {
       cmd_table[fundex].fun(tokens);
     } else {
-      /* REPLACE this to run commands as programs. */
-        if ( exe_sys(tokens) )
+        if ( exe_sys(tokens, pathes) )
         {
             fprintf(stdout, "This shell doesn't know how to run programs.\n");
         }

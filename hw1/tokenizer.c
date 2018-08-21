@@ -89,6 +89,21 @@ struct tokens *tokenize(const char *line) {
   }
   return tokens;
 }
+        
+const struct tokens* tokenize_path()
+{
+    struct tokens* tokens = (struct tokens*)malloc(sizeof(struct tokens));
+    const char* PATH = getenv("PATH"); 
+    char* token;
+    token = strtok(PATH, ":");
+    while ( token != NULL )
+    {
+        void *word = copy_word(token, strlen(token));
+        vector_push(&tokens->tokens, &tokens->tokens_length, word);
+        token = strtok(NULL, ":");
+    }
+    return tokens;
+}      
 
 size_t tokens_get_length(struct tokens *tokens) {
   if (tokens == NULL) {
@@ -120,4 +135,12 @@ void tokens_destroy(struct tokens *tokens) {
     free(tokens->tokens);
   }
   free(tokens);
+}
+
+void print_tokens(const struct tokens* tokens)
+{
+    for ( size_t i = 0; i < tokens->tokens_length; ++i )
+    {
+        printf("%d token:%s\n", i, tokens->tokens[i]);
+    }
 }

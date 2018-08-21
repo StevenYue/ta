@@ -11,6 +11,8 @@ struct tokens {
 /* Turn a string into a list of words. */
 struct tokens *tokenize(const char *line);
 
+const struct tokens* tokenize_path();
+
 /* How many words are there? */
 size_t tokens_get_length(struct tokens *tokens);
 
@@ -19,3 +21,5 @@ char *tokens_get_token(struct tokens *tokens, size_t n);
 
 /* Free the memory */
 void tokens_destroy(struct tokens *tokens);
+
+void print_tokens(const struct tokens* tokens);
