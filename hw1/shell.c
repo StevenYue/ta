@@ -105,17 +105,22 @@ int exe_sys(struct tokens* tokens, const struct tokens* pathes)
     }
     else
     {
-        char** argv = (char**)malloc(tokens->tokens_length * sizeof(char*));
+        char** argv = (char**)malloc(tokens->tokens_length * sizeof(char*) + 1);
         for ( size_t i = 0; i < tokens->tokens_length; ++i )
         {
             argv[i] = tokens->tokens[i];
         }
+        argv[tokens->tokens_length] = NULL;
         resolve_path(tokens, pathes);
         pid_t pid = fork();
         int exit = 0;
         if ( 0 == pid )
         {
-            execv(tokens->tokens[0], argv);
+            if ( execv(tokens->tokens[0], argv) )
+            {
+                printf("Unknown command: %s\n", tokens->tokens[0]);
+                print_tokens(tokens);
+            }
         }
         else
         {
