@@ -10,6 +10,8 @@
 #include <termios.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "tokenizer.h"
 
 /* Convenience macro to silence compiler warnings about unused function parameters. */
@@ -97,6 +99,27 @@ int cmd_cd(struct tokens *ts)
     return 0;
 }
 
+void redirect(const char* sign, const char* file)
+{
+    if ( 0 == strcmp(sign, ">") )
+    {
+        int fd = open(file, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+        if ( -1 != fd )
+        {
+            dup2(fd, 1);
+        }
+        else
+        {
+            printf("failed to open file, rc: %d\n", errno);
+        }
+    }
+    else if ( 0 == strcmp(sign, "<") )
+    {
+        printf("input %s\n", file); 
+    }
+    else{}
+}
+
 int exe_sys(struct tokens* tokens, const struct tokens* pathes)
 {
     if ( 0 == tokens->tokens_length )
@@ -106,8 +129,18 @@ int exe_sys(struct tokens* tokens, const struct tokens* pathes)
     else
     {
         char** argv = (char**)malloc(tokens->tokens_length * sizeof(char*) + 1);
-        for ( size_t i = 0; i < tokens->tokens_length; ++i )
+        bool is_redirect = false;
+        size_t len = tokens->tokens_length;
+        if ( len > 2 && (0 == strcmp("<", tokens->tokens[len-2]) || 0 == strcmp(">", tokens->tokens[len-2])) )
         {
+            is_redirect = true;
+        }
+        for ( size_t i = 0; i < len; ++i )
+        {
+            if ( is_redirect && i == len - 2 )
+            {
+                break;
+            }
             argv[i] = tokens->tokens[i];
         }
         argv[tokens->tokens_length] = NULL;
@@ -116,6 +149,11 @@ int exe_sys(struct tokens* tokens, const struct tokens* pathes)
         int exit = 0;
         if ( 0 == pid )
         {
+            if ( is_redirect )
+            {
+                size_t len = tokens->tokens_length;
+                redirect(tokens->tokens[len-2], tokens->tokens[len-1]); 
+            }
             if ( execv(tokens->tokens[0], argv) )
             {
                 printf("Unknown command: %s\n", tokens->tokens[0]);
