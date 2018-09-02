@@ -115,7 +115,15 @@ void redirect(const char* sign, const char* file)
     }
     else if ( 0 == strcmp(sign, "<") )
     {
-        printf("input %s\n", file); 
+        int fd = open(file, O_RDONLY | O_CREAT, S_IRUSR | S_IWUSR);
+        if ( -1 != fd )
+        {
+            dup2(fd, 0);
+        }
+        else
+        {
+            printf("failed to open file, rc: %d\n", errno);
+        }
     }
     else{}
 }
